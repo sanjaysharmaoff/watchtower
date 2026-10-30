@@ -1,0 +1,29 @@
+# Overlay that adds real Kubernetes event enrichment from a local minikube.
+#
+#   pwsh deploy/k8s/wire-minikube.ps1
+#   docker compose -f docker-compose.yml -f docker-compose.minikube.yml up -d
+#
+# The script applies the RBAC and the broken workloads, exports a short-lived
+# service account token into .env and copies the cluster CA next to it. WatchTower
+# joins minikube's docker network and reaches the API server as https://minikube:8443,
+# which is a SAN on the API server certificate, so TLS is verified properly rather
+# than skipped.
+
+services:
+  watchtower:
+    networks:
+      - default
+      - minikube
+    environment:
+      WT_ENRICH_PROVIDERS: loki,k8s
+      WT_K8S_API_SERVER: https://minikube:8443
+      WT_K8S_CA_FILE: /etc/watchtower/minikube-ca.crt
+      WT_K8S_TOKEN: ${WT_K8S_TOKEN:?run deploy/k8s/wire-minikube.ps1 first}
+      WT_K8S_EVENT_LIMIT: "60"
+    volumes:
+      - ./deploy/k8s/minikube-ca.crt:/etc/watchtower/minikube-ca.crt:ro
+
+networks:
+  minikube:
+    external: true
+    name: minikube

@@ -1,0 +1,42 @@
+# Least-privilege identity for WatchTower's Kubernetes context provider.
+#
+# It reads events and pod state. It has no write verbs anywhere, because WatchTower
+# never changes cluster state: it proposes commands to a human.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: watchtower
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: watchtower
+  namespace: watchtower
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: watchtower-event-reader
+rules:
+  - apiGroups: [""]
+    resources: ["events", "pods", "services", "endpoints", "nodes"]
+    verbs: ["get", "list"]
+  - apiGroups: ["events.k8s.io"]
+    resources: ["events"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: watchtower-event-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: watchtower-event-reader
+subjects:
+  - kind: ServiceAccount
+    name: watchtower
+    namespace: watchtower

@@ -1,0 +1,42 @@
+# Prometheus for the WatchTower end-to-end stack.
+#
+# It scrapes itself plus a target that is intentionally absent, so `up == 0` makes
+# real rules fire within about half a minute of startup. Alertmanager then posts a
+# real webhook payload to WatchTower.
+
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+  external_labels:
+    cluster: prod-eu-1
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # This target does not exist. That is the point: it makes `up` go to 0 and the
+  # rules below fire with realistic labels.
+  - job_name: checkout-api
+    static_configs:
+      - targets: ["checkout-api.checkout.svc:9100"]
+        labels:
+          namespace: checkout
+          service: checkout-api
+          pod: checkout-api-7d9c6f8b4-x2ktz
+
+  - job_name: payments-api
+    static_configs:
+      - targets: ["payments-api.checkout.svc:9100"]
+        labels:
+          namespace: checkout
+          service: payments-api
+          pod: payments-api-5f8b7c6d5-mm41k

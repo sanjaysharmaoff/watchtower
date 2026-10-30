@@ -1,0 +1,45 @@
+{
+  "version": "4",
+  "groupKey": "{}:{alertname=\"PodMemoryHigh\"}",
+  "status": "firing",
+  "receiver": "watchtower",
+  "externalURL": "http://alertmanager.example.com",
+  "commonLabels": {
+    "cluster": "prod-eu-1",
+    "namespace": "checkout",
+    "service": "checkout-api"
+  },
+  "commonAnnotations": {
+    "runbook_url": "https://wiki.example.com/runbooks/pod-memory"
+  },
+  "alerts": [
+    {
+      "status": "firing",
+      "fingerprint": "8f1c9a2b3d4e5f60",
+      "labels": {
+        "alertname": "PodMemoryUsageCritical",
+        "severity": "critical",
+        "pod": "checkout-api-7d9c6f8b4-x2ktz"
+      },
+      "annotations": {
+        "summary": "checkout-api memory usage at 98% of limit",
+        "description": "Container checkout-api in namespace checkout has been above 95% of its memory limit for 10 minutes. Connection string postgres://svc:s3cr3tp4ss@db.internal:5432/checkout was logged by the app. Contact oncall@example.com."
+      },
+      "startsAt": "2026-07-30T09:12:00Z",
+      "generatorURL": "http://prometheus.example.com/graph"
+    },
+    {
+      "status": "firing",
+      "fingerprint": "aa22bb33cc44dd55",
+      "labels": {
+        "alertname": "PodRestartRateHigh",
+        "severity": "warning",
+        "pod": "checkout-api-7d9c6f8b4-x2ktz"
+      },
+      "annotations": {
+        "summary": "checkout-api restarting repeatedly"
+      },
+      "startsAt": "2026-07-30T09:13:00Z"
+    }
+  ]
+}

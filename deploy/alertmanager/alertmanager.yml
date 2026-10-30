@@ -1,0 +1,25 @@
+# Alertmanager routes everything to WatchTower's webhook.
+#
+# group_by is intentionally coarse: WatchTower does its own correlation, so the
+# less Alertmanager splits, the more context arrives in one payload.
+
+global:
+  resolve_timeout: 2m
+
+route:
+  receiver: watchtower
+  group_by: [cluster, namespace]
+  group_wait: 5s
+  group_interval: 30s
+  repeat_interval: 1h
+
+receivers:
+  - name: watchtower
+    webhook_configs:
+      - url: http://watchtower:8080/alerts
+        send_resolved: true
+        max_alerts: 0
+        http_config:
+          authorization:
+            type: Bearer
+            credentials: local-dev-token

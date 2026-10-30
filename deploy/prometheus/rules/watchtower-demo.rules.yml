@@ -1,0 +1,63 @@
+groups:
+  - name: watchtower-e2e
+    interval: 10s
+    rules:
+      # Two rules fire off the same condition with different names and severities,
+      # which exercises WatchTower's correlation: one incident, several alerts.
+      - alert: ContainerOOMKilled
+        expr: up{job="checkout-api"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }} container OOM killed, memory limit reached"
+          description: >-
+            Container {{ $labels.service }} in namespace {{ $labels.namespace }} exceeded its
+            memory limit and was terminated by the kernel. Pod {{ $labels.pod }} has restarted
+            repeatedly. The app logged its connection string
+            postgres://svc:s3cr3tp4ss@db.internal:5432/checkout on startup and paged
+            oncall@example.com.
+          runbook_url: https://wiki.example.com/runbooks/oom
+
+      - alert: PodRestartRateHigh
+        expr: up{job="checkout-api"} == 0
+        for: 15s
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} is restarting repeatedly"
+          description: "Restart rate above threshold for {{ $labels.pod }}."
+
+      - alert: DependencyUnreachable
+        expr: up{job="payments-api"} == 0
+        for: 15s
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }} is unreachable from checkout"
+          description: "Scrape of {{ $labels.service }} in {{ $labels.namespace }} is failing."
+
+      # A second, differently named failure on the same service. Its signature does
+      # not match the first incident, so it passes the debouncer and gives retrieval
+      # a chance to find the runbook approved for the earlier one.
+      - alert: ContainerMemoryLimitReached
+        expr: up{job="checkout-api"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }} reached its memory limit and was killed again"
+          description: >-
+            {{ $labels.service }} in {{ $labels.namespace }} hit its memory limit again after
+            the previous incident. Heap grew past the cgroup limit within minutes of start.
+
+      - alert: MemoryPressureCritical
+        expr: up{job="checkout-api"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }} under sustained memory pressure"
+          description: >-
+            Working set for {{ $labels.service }} in {{ $labels.namespace }} has stayed above
+            the cgroup limit. The pod is being restarted by the kubelet.

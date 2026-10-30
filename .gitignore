@@ -1,0 +1,10 @@
+bin/
+dist/
+*.exe
+.env
+.env.local
+coverage.out
+deploy/k8s/minikube-ca.crt
+compose-up.log
+minikube-start.log
+.env.k8s
